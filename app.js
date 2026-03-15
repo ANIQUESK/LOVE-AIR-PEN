@@ -13,12 +13,12 @@ import { heartsRain } from "./effects/heartsRain.js"
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 
+const startBtn = document.getElementById("startBtn")
+const continueBtn = document.getElementById("continueBtn")
+
 const warningScreen = document.getElementById("warningScreen")
 const nameScreen = document.getElementById("nameScreen")
 const messageScreen = document.getElementById("messageScreen")
-
-const startBtn = document.getElementById("startBtn")
-const continueBtn = document.getElementById("continueBtn")
 
 const userNameInput = document.getElementById("userName")
 const personalMessage = document.getElementById("personalMessage")
@@ -70,33 +70,32 @@ window.brushSize = 6
 // EXPERIENCE FLOW
 // ===============================
 
-// WARNING → NAME
-startBtn.onclick = () => {
+startBtn.onclick = ()=>{
 
-warningScreen.style.display = "none"
-nameScreen.style.display = "flex"
+warningScreen.style.display="none"
+nameScreen.style.display="flex"
 
 }
 
-// NAME → MESSAGE
-continueBtn.onclick = () => {
+continueBtn.onclick = ()=>{
 
 const name = userNameInput.value.trim()
 
 if(!name){
+
 alert("Please enter your name")
 return
+
 }
 
-nameScreen.style.display = "none"
-messageScreen.style.display = "flex"
+nameScreen.style.display="none"
+messageScreen.style.display="flex"
 
-personalMessage.innerHTML = `
-Hey <b>${name}</b> ❤️<br><br>
+personalMessage.innerHTML =
+`Hey <b>${name}</b> ❤️<br><br>
 I hope you like this.<br>
 This is specially made for you by Anique Shaikh.<br><br>
-Let's start.
-`
+Let's start.`
 
 setTimeout(()=>{
 
@@ -115,54 +114,54 @@ initHandTracking(canvas,ctx,window.strokes)
 // BUTTON ACTIONS
 // ===============================
 
-clearBtn.onclick = () => {
+clearBtn.onclick = ()=>{
 
 window.strokes.length = 0
 ctx.clearRect(0,0,canvas.width,canvas.height)
 
-status.innerText = "Canvas cleared"
+status.innerText="Canvas cleared"
 
 }
 
 
-savePNGBtn.onclick = () => {
+savePNGBtn.onclick = ()=>{
 
 const link = document.createElement("a")
 
-link.download = "love-air-pen.png"
+link.download="love-air-pen.png"
 
 link.href = canvas.toDataURL("image/png")
 
 link.click()
 
-status.innerText = "PNG saved"
+status.innerText="PNG saved"
 
 }
 
 
-saveSVGBtn.onclick = () => {
+saveSVGBtn.onclick = ()=>{
 
 exportSVG(window.strokes)
 
-status.innerText = "SVG exported"
+status.innerText="SVG exported"
 
 }
 
 
-savePDFBtn.onclick = () => {
+savePDFBtn.onclick = ()=>{
 
 exportPDF(canvas)
 
-status.innerText = "PDF exported"
+status.innerText="PDF exported"
 
 }
 
 
-replayBtn.onclick = () => {
+replayBtn.onclick = ()=>{
 
 replayDrawing(canvas,ctx,window.strokes)
 
-status.innerText = "Replaying drawing"
+status.innerText="Replaying drawing"
 
 }
 
@@ -171,9 +170,9 @@ status.innerText = "Replaying drawing"
 // OCR TEXT RECOGNITION
 // ===============================
 
-recognizeBtn.onclick = async () => {
+recognizeBtn.onclick = async ()=>{
 
-status.innerText = "Recognizing handwriting..."
+status.innerText="Recognizing handwriting..."
 
 const text = await recognizeText(canvas)
 
@@ -197,10 +196,9 @@ alert("No text detected.")
 const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition
 
-
 if(!SpeechRecognition){
 
-status.innerText = "Voice commands not supported"
+status.innerText="Voice commands not supported"
 
 }else{
 
@@ -211,17 +209,17 @@ recognition.interimResults = false
 recognition.lang = "en-US"
 
 
-recognition.onstart = () => {
+recognition.onstart = ()=>{
 
-status.innerText = "Voice assistant listening..."
+status.innerText="Voice assistant listening..."
 
 }
 
 
-recognition.onresult = (event) => {
+recognition.onresult = (event)=>{
 
 const command =
-event.results[event.results.length - 1][0].transcript
+event.results[event.results.length-1][0].transcript
 .toLowerCase()
 .trim()
 
@@ -229,10 +227,6 @@ handleVoiceCommand(command)
 
 }
 
-
-// =============================
-// COMMAND PROCESSOR
-// =============================
 
 function handleVoiceCommand(cmd){
 
@@ -242,11 +236,13 @@ console.log("Voice command:",cmd)
 // HEART RAIN
 if(
 cmd.includes("rain of hearts") ||
+cmd.includes("rain of heart") ||
 cmd.includes("heart rain") ||
-cmd.includes("love rain")
+cmd.includes("love rain") ||
+cmd.includes("rain")
 ){
 
-status.innerText = "Love is raining..."
+status.innerText="Love is raining..."
 
 heartsRain(canvas)
 
@@ -257,22 +253,28 @@ return
 
 // CLEAR
 if(cmd.includes("clear") || cmd.includes("erase")){
+
 clearBtn.click()
 return
+
 }
 
 
 // SAVE
 if(cmd.includes("save")){
+
 savePNGBtn.click()
 return
+
 }
 
 
 // REPLAY
 if(cmd.includes("replay")){
+
 replayBtn.click()
 return
+
 }
 
 
@@ -282,86 +284,71 @@ cmd.includes("recognize") ||
 cmd.includes("detect text") ||
 cmd.includes("read text")
 ){
+
 recognizeBtn.click()
 return
-}
 
-
-// DEFAULT COLOR
-if(cmd.includes("default color") || cmd.includes("reset color")){
-window.currentColor = "#ff2d8f"
-status.innerText = "Color reset to default"
-return
 }
 
 
 // COLORS
 if(cmd.includes("red")){
-window.currentColor = "#ff4b4b"
-status.innerText = "Color red"
+window.currentColor="#ff4b4b"
 return
 }
 
 if(cmd.includes("blue")){
-window.currentColor = "#4b8bff"
-status.innerText = "Color blue"
+window.currentColor="#4b8bff"
 return
 }
 
 if(cmd.includes("green")){
-window.currentColor = "#4bff7a"
-status.innerText = "Color green"
+window.currentColor="#4bff7a"
 return
 }
 
 if(cmd.includes("yellow")){
-window.currentColor = "#f4c542"
-status.innerText = "Color yellow"
+window.currentColor="#f4c542"
 return
 }
 
 if(cmd.includes("pink")){
-window.currentColor = "#ff2d8f"
-status.innerText = "Color pink"
+window.currentColor="#ff2d8f"
 return
 }
 
 
 // BRUSH SIZE
 if(cmd.includes("bigger") || cmd.includes("increase brush")){
+
 window.brushSize += 2
-status.innerText = "Brush bigger"
 return
+
 }
 
 if(cmd.includes("smaller") || cmd.includes("reduce brush")){
+
 window.brushSize = Math.max(2,window.brushSize-2)
-status.innerText = "Brush smaller"
 return
-}
 
 }
 
+}
 
-// =============================
-// ERROR HANDLING
-// =============================
 
 recognition.onerror = (event)=>{
+
 console.warn("Voice error:",event.error)
+
 }
 
-
-// =============================
-// AUTO RESTART LISTENING
-// =============================
 
 recognition.onend = ()=>{
+
 recognition.start()
+
 }
 
-
-// START VOICE SYSTEM
 recognition.start()
 
 }

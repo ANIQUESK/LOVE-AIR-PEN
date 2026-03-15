@@ -9,11 +9,16 @@ let smoothX = null
 let smoothY = null
 
 let lastPinch = false
-const pinchThreshold = 0.05
+const pinchThreshold = 0.045
 
-// smoothing buffer
+// smoothing buffers
 let buffer = []
-const bufferSize = 6
+const bufferSize = 10
+
+// velocity smoothing
+let lastX = null
+let lastY = null
+let velocity = 0
 
 // neon board pulse
 let pulse = 0
@@ -29,7 +34,7 @@ window.replayMode = false
 
 // UI click protection
 let lastUIClick = 0
-const uiClickCooldown = 600 // ms
+const uiClickCooldown = 600
 
 
 
@@ -79,7 +84,7 @@ bgHearts.splice(i,1)
 
 
 // ===============================
-// PARTICLE EFFECT
+// PARTICLES
 // ===============================
 
 function spawnParticles(x,y){
@@ -150,12 +155,10 @@ yc
 
 }
 
-// glow layer
 ctx.lineWidth = (window.brushSize || 6) + 3
 ctx.globalAlpha = 0.25
 ctx.stroke()
 
-// main stroke
 ctx.lineWidth = window.brushSize || 6
 ctx.globalAlpha = 1
 ctx.stroke()
@@ -165,12 +168,39 @@ ctx.stroke()
 
 
 // ===============================
-// POINT STABILIZATION
+// ADVANCED POINT STABILIZATION
 // ===============================
 
 function stabilizePoint(x,y){
 
-buffer.push({x,y})
+if(lastX !== null){
+
+let dx = x-lastX
+let dy = y-lastY
+
+velocity = Math.sqrt(dx*dx + dy*dy)
+
+}
+
+lastX = x
+lastY = y
+
+// dynamic smoothing based on speed
+let smoothing = velocity > 10 ? 0.4 : 0.7
+
+if(smoothX === null){
+
+smoothX = x
+smoothY = y
+
+}else{
+
+smoothX = smoothX + (x - smoothX) * smoothing
+smoothY = smoothY + (y - smoothY) * smoothing
+
+}
+
+buffer.push({x:smoothX,y:smoothY})
 
 if(buffer.length > bufferSize){
 buffer.shift()
@@ -217,7 +247,6 @@ if(inside){
 hoveringAny = true
 btn.classList.add("active")
 
-// click with pinch
 if(isPinching && Date.now() - lastUIClick > uiClickCooldown){
 
 btn.click()

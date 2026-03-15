@@ -5,11 +5,13 @@ export async function initHandTracking(canvas, ctx, strokes){
 const video = document.getElementById("video")
 const status = document.getElementById("status")
 
-try{
+let running = true
 
 // ==============================
 // CAMERA INITIALIZATION
 // ==============================
+
+try{
 
 const stream = await navigator.mediaDevices.getUserMedia({
 
@@ -23,11 +25,13 @@ facingMode:"user"
 })
 
 video.srcObject = stream
+
 await video.play()
 
 }catch(err){
 
 console.error("Camera error:",err)
+
 status.innerText = "Camera access denied"
 
 return
@@ -50,27 +54,26 @@ hands.setOptions({
 
 maxNumHands:1,
 
-// higher = more accurate
 modelComplexity:1,
 
-// stronger detection threshold
-minDetectionConfidence:0.8,
-
-// stronger tracking stability
-minTrackingConfidence:0.8
+minDetectionConfidence:0.75,
+minTrackingConfidence:0.75
 
 })
 
 
 // ==============================
-// SMOOTHING VARIABLES
+// POSITION SMOOTHING
 // ==============================
 
 let lastX = null
 let lastY = null
 
-// exponential smoothing factor
-const smoothingFactor = 0.35
+let velocityX = 0
+let velocityY = 0
+
+const smoothing = 0.45
+const velocitySmoothing = 0.2
 
 
 // ==============================
@@ -79,36 +82,65 @@ const smoothingFactor = 0.35
 
 hands.onResults(results=>{
 
-if(results.multiHandLandmarks && results.multiHandLandmarks.length>0){
+if(!running) return
+
+
+// no hand detected
+if(!results.multiHandLandmarks ||
+results.multiHandLandmarks.length === 0){
+
+lastX = null
+lastY = null
+
+gestureEngine(results,canvas,ctx,strokes)
+
+return
+
+}
+
 
 const hand = results.multiHandLandmarks[0]
 
 const index = hand[8]
 
-// convert normalized coordinates
+
+// convert normalized coords
+
 let x = index.x * canvas.width
 let y = index.y * canvas.height
 
+
+// initialize
 if(lastX === null){
 
 lastX = x
 lastY = y
 
-}else{
-
-// exponential smoothing
-lastX = lastX + (x - lastX) * smoothingFactor
-lastY = lastY + (y - lastY) * smoothingFactor
-
 }
 
-// override landmark with smoothed position
+
+// velocity smoothing
+
+velocityX = velocityX*(1-velocitySmoothing) +
+(x-lastX)*velocitySmoothing
+
+velocityY = velocityY*(1-velocitySmoothing) +
+(y-lastY)*velocitySmoothing
+
+
+// position smoothing
+
+lastX = lastX + velocityX*smoothing
+lastY = lastY + velocityY*smoothing
+
+
+// overwrite landmark with smoothed value
+
 hand[8].x = lastX / canvas.width
 hand[8].y = lastY / canvas.height
 
-}
 
-gestureEngine(results, canvas, ctx, strokes)
+gestureEngine(results,canvas,ctx,strokes)
 
 })
 
@@ -118,6 +150,8 @@ gestureEngine(results, canvas, ctx, strokes)
 // ==============================
 
 async function detect(){
+
+if(!running) return
 
 try{
 
