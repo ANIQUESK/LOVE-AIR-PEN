@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Love Air Pen</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+</head>
+
+<body>
+
+<!-- animated hearts background -->
+<div class="hearts" id="hearts"></div>
+
+<video id="video" autoplay playsinline></video>
+<!-- WARNING SCREEN -->
+
+<div id="warningScreen">
+
+<div class="warningBox">
+
+<h1>⚠️ Before You Start</h1>
+
+<p>
+Whatever you write here may become real.<br>
+So write with love and positivity.
+</p>
+
+<button id="startBtn">OK, I Understand</button>
+
+</div>
+
+</div>
+<canvas id="canvas"></canvas>
+
+<div class="panel">
+
+<h1>❤️ Love Air Pen</h1>
+
+<button id="clearBtn">Clear</button>
+<button id="savePNGBtn">Save PNG</button>
+<button id="saveSVGBtn">Export SVG</button>
+<button id="savePDFBtn">Export PDF</button>
+
+</div>
+
+<div id="status">Spreading love...</div>
+
+<script type="module" src="app.js"></script>
+
+<script>
+
+// generate floating hearts
+
+const heartsContainer = document.getElementById("hearts")
+
+for(let i=0;i<25;i++){
+
+const heart = document.createElement("div")
+
+heart.className = "heart"
+
+heart.style.left = Math.random()*100 + "vw"
+
+heart.style.animationDuration = (6 + Math.random()*8) + "s"
+
+heart.style.fontSize = (16 + Math.random()*20) + "px"
+
+heartsContainer.appendChild(heart)
+
+}
+
+</script>
+
+</body>
+</html>
