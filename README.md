@@ -2,8 +2,11 @@
 Write in the air. Turn thoughts into reality.
 <p align="center">
 
-Whatever you write here may become real.<br>
-So write with love and positivity.
+
+
+
+
+
 
 
 </p>
