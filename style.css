@@ -9,11 +9,16 @@ overflow:hidden;
 font-family:"Poppins",sans-serif;
 
 background:
-radial-gradient(circle at center,#3a0036,#210021,#120012);
+radial-gradient(circle at 20% 20%,#4a0043 0%,transparent 40%),
+radial-gradient(circle at 80% 70%,#380031 0%,transparent 40%),
+linear-gradient(135deg,#160014,#0c000c);
 
 color:white;
-}
 
+-webkit-font-smoothing:antialiased;
+-moz-osx-font-smoothing:grayscale;
+text-rendering:optimizeLegibility;
+}
 
 /* ============================= */
 /* HEART BACKGROUND */
@@ -33,12 +38,10 @@ position:absolute;
 bottom:-50px;
 color:#ff2d8f;
 
-opacity:0.45;
+opacity:0.35;
 
 text-shadow:
-0 0 6px #ff2d8f,
-0 0 12px #ff2d8f,
-0 0 20px #ff2d8f;
+0 0 6px rgba(255,45,143,0.6);
 
 animation:floatHeart linear infinite;
 }
@@ -50,21 +53,20 @@ content:"❤️";
 @keyframes floatHeart{
 
 0%{
-transform:translateY(0) scale(0.5);
+transform:translateY(0) scale(0.6);
 opacity:0;
 }
 
-20%{
-opacity:0.7;
+15%{
+opacity:0.6;
 }
 
 100%{
-transform:translateY(-110vh) scale(1.4);
+transform:translateY(-110vh) scale(1.2);
 opacity:0;
 }
 
 }
-
 
 /* ============================= */
 /* VIDEO INPUT */
@@ -73,7 +75,6 @@ opacity:0;
 video{
 display:none;
 }
-
 
 /* ============================= */
 /* CANVAS */
@@ -92,8 +93,9 @@ z-index:2;
 
 cursor:none;
 
-}
+image-rendering:optimizeQuality;
 
+}
 
 /* ============================= */
 /* CONTROL PANEL */
@@ -112,17 +114,22 @@ padding:24px;
 
 border-radius:20px;
 
-background:rgba(255,0,90,0.12);
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.08),
+rgba(255,255,255,0.02)
+);
 
 backdrop-filter:blur(18px);
 
-border:1px solid rgba(255,150,180,0.2);
+border:1px solid rgba(255,150,180,0.25);
 
 box-shadow:
-0 25px 45px rgba(0,0,0,0.65),
-0 0 25px rgba(255,80,120,0.3);
+0 20px 40px rgba(0,0,0,0.6),
+0 0 18px rgba(255,45,143,0.35),
+inset 0 1px 0 rgba(255,255,255,0.15);
 
-animation:floatPanel 6s ease-in-out infinite;
+animation:floatPanel 7s ease-in-out infinite;
 
 z-index:5;
 
@@ -137,11 +144,10 @@ font-size:20px;
 color:#ff7aa8;
 
 text-shadow:
-0 0 6px #ff2d8f,
-0 0 12px #ff2d8f;
+0 0 6px rgba(255,45,143,0.7),
+0 0 14px rgba(255,45,143,0.35);
 
 }
-
 
 /* ============================= */
 /* BUTTONS */
@@ -159,10 +165,11 @@ border:none;
 
 border-radius:12px;
 
-background:linear-gradient(
-135deg,
-#ff4d79,
-#ff7aa8
+background:
+linear-gradient(
+180deg,
+#ff7aa8,
+#ff2d8f
 );
 
 color:white;
@@ -171,10 +178,37 @@ font-weight:600;
 
 cursor:pointer;
 
+position:relative;
+
 transition:all 0.25s ease;
 
 box-shadow:
-0 6px 16px rgba(0,0,0,0.4);
+0 8px 18px rgba(0,0,0,0.45),
+0 0 10px rgba(255,80,140,0.4);
+
+}
+
+button::after{
+
+content:"";
+
+position:absolute;
+
+top:0;
+left:0;
+
+width:100%;
+height:50%;
+
+border-radius:12px;
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.35),
+rgba(255,255,255,0)
+);
+
+pointer-events:none;
 
 }
 
@@ -183,17 +217,16 @@ button:hover{
 transform:translateY(-2px);
 
 box-shadow:
-0 12px 24px rgba(0,0,0,0.5),
-0 0 12px rgba(255,120,150,0.7);
+0 14px 28px rgba(0,0,0,0.55),
+0 0 12px rgba(255,100,160,0.6);
 
 }
 
 button:active{
 
-transform:scale(0.95);
+transform:scale(0.96);
 
 }
-
 
 /* ============================= */
 /* STATUS BAR */
@@ -208,25 +241,24 @@ left:20px;
 
 background:rgba(255,0,90,0.15);
 
-padding:10px 15px;
+padding:10px 14px;
 
 border-radius:10px;
 
 font-size:13px;
 
-backdrop-filter:blur(10px);
+backdrop-filter:blur(8px);
 
-border:1px solid rgba(255,150,180,0.25);
+border:1px solid rgba(255,120,170,0.25);
 
 box-shadow:
-0 0 10px rgba(255,100,150,0.4);
+0 0 8px rgba(255,100,150,0.35);
 
-animation:fadeIn 1s ease;
+animation:fadeIn 0.8s ease;
 
 z-index:6;
 
 }
-
 
 /* ============================= */
 /* PANEL FLOAT ANIMATION */
@@ -235,11 +267,10 @@ z-index:6;
 @keyframes floatPanel{
 
 0%{transform:translateY(0px)}
-50%{transform:translateY(-8px)}
+50%{transform:translateY(-6px)}
 100%{transform:translateY(0px)}
 
 }
-
 
 /* ============================= */
 /* FADE IN */
@@ -249,7 +280,7 @@ z-index:6;
 
 from{
 opacity:0;
-transform:translateY(10px);
+transform:translateY(8px);
 }
 
 to{
@@ -258,7 +289,6 @@ transform:translateY(0);
 }
 
 }
-
 
 /* ============================= */
 /* WARNING SCREEN */
@@ -274,7 +304,7 @@ left:0;
 width:100%;
 height:100%;
 
-background:rgba(0,0,0,0.9);
+background:rgba(0,0,0,0.92);
 
 display:flex;
 justify-content:center;
@@ -282,13 +312,17 @@ align-items:center;
 
 z-index:9999;
 
-animation:fadeIn 0.6s ease;
+animation:fadeIn 0.5s ease;
 
 }
 
 .warningBox{
 
-background:#1b001a;
+background:linear-gradient(
+180deg,
+rgba(135, 0, 115, 0.08),
+rgba(49, 0, 38, 0.02)
+);
 
 padding:40px;
 
@@ -298,26 +332,30 @@ text-align:center;
 
 width:420px;
 
+backdrop-filter:blur(18px);
+
+border:1px solid rgba(255,150,180,0.3);
+
 box-shadow:
-0 0 35px rgba(255,45,143,0.5);
+0 0 40px rgba(255,45,143,0.4),
+inset 0 1px 0 rgba(255,255,255,0.15);
 
 }
 
 .warningBox h1{
 
-color:#ff2d8f;
+color:#ff4d96;
 
 margin-bottom:10px;
 
 text-shadow:
-0 0 6px #ff2d8f,
-0 0 12px #ff2d8f;
+0 0 5px rgba(255,45,143,0.6);
 
 }
 
 .warningBox p{
 
-font-size:16px;
+font-size:15px;
 
 margin-bottom:25px;
 
@@ -333,22 +371,281 @@ color:white;
 
 border:none;
 
-padding:12px 25px;
+padding:12px 24px;
 
-font-size:16px;
+font-size:15px;
 
-border-radius:12px;
+border-radius:10px;
 
 cursor:pointer;
 
-transition:0.3s;
+transition:0.25s;
 
 }
 
 .warningBox button:hover{
 
-transform:scale(1.05);
+transform:scale(1.04);
 
-box-shadow:0 0 18px #ff2d8f;
+box-shadow:0 0 12px rgba(255,45,143,0.6);
+
+}
+
+/* ============================= */
+/* NAME SCREEN */
+/* ============================= */
+
+#nameScreen{
+
+position:fixed;
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+background:radial-gradient(circle at center,#3c0035,#160013);
+
+z-index:9999;
+
+animation:screenFade 0.8s ease;
+
+}
+
+.nameBox{
+
+width:420px;
+
+padding:40px;
+
+border-radius:22px;
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.12),
+rgba(255,255,255,0.02)
+);
+
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(255,150,200,0.35);
+
+box-shadow:
+0 0 40px rgba(255,45,143,0.45),
+inset 0 0 12px rgba(255,255,255,0.08);
+
+text-align:center;
+
+animation:boxEnter 0.7s ease;
+
+}
+
+.nameBox h1{
+
+margin-bottom:10px;
+
+font-size:26px;
+
+color:#ff6fa8;
+
+text-shadow:0 0 10px rgba(255,45,143,0.6);
+
+}
+
+.nameBox p{
+
+font-size:15px;
+
+color:#ffd6e9;
+
+margin-bottom:20px;
+
+}
+
+/* ============================= */
+/* NAME INPUT */
+/* ============================= */
+
+#userName{
+
+width:100%;
+
+padding:14px;
+
+border-radius:12px;
+
+border:1px solid rgba(255,150,200,0.3);
+
+background:rgba(0,0,0,0.35);
+
+color:white;
+
+font-size:16px;
+
+text-align:center;
+
+outline:none;
+
+transition:0.3s;
+
+box-shadow:
+inset 0 0 10px rgba(255,45,143,0.25);
+
+}
+
+#userName::placeholder{
+
+color:#ffc0d8;
+
+}
+
+#userName:focus{
+
+border:1px solid #ff2d8f;
+
+box-shadow:
+0 0 10px rgba(255,45,143,0.5),
+inset 0 0 10px rgba(255,45,143,0.35);
+
+}
+
+/* ============================= */
+/* CONTINUE BUTTON */
+/* ============================= */
+
+#continueBtn{
+
+margin-top:18px;
+
+padding:12px;
+
+border:none;
+
+border-radius:12px;
+
+background:linear-gradient(
+145deg,
+#ff5fa0,
+#ff2d8f
+);
+
+color:white;
+
+font-weight:600;
+
+cursor:pointer;
+
+transition:0.3s;
+
+box-shadow:
+0 6px 18px rgba(255,45,143,0.45);
+
+}
+
+#continueBtn:hover{
+
+transform:translateY(-2px);
+
+box-shadow:
+0 10px 28px rgba(255,45,143,0.6);
+
+}
+
+/* ============================= */
+/* MESSAGE SCREEN */
+/* ============================= */
+
+#messageScreen{
+
+position:fixed;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+background:radial-gradient(circle,#3a0033,#120012);
+
+z-index:9999;
+
+animation:screenFade 0.7s ease;
+
+}
+
+.messageBox{
+
+width:460px;
+
+padding:45px;
+
+border-radius:24px;
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.1),
+rgba(255,255,255,0.02)
+);
+
+backdrop-filter:blur(18px);
+
+border:1px solid rgba(255,150,200,0.35);
+
+box-shadow:
+0 0 45px rgba(255,45,143,0.5);
+
+text-align:center;
+
+animation:boxEnter 0.6s ease;
+
+}
+
+#personalMessage{
+
+font-size:22px;
+
+line-height:1.7;
+
+color:#ffd6e9;
+
+text-shadow:
+0 0 12px rgba(255,45,143,0.5);
+
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+@keyframes boxEnter{
+
+0%{
+
+opacity:0;
+transform:translateY(20px) scale(0.95);
+
+}
+
+100%{
+
+opacity:1;
+transform:translateY(0) scale(1);
+
+}
+
+}
+
+@keyframes screenFade{
+
+from{opacity:0}
+to{opacity:1}
 
 }

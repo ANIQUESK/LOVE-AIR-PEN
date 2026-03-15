@@ -3,22 +3,32 @@ import { initHandTracking } from "./ai/handTracking.js"
 import { recognizeText } from "./ai/handwritingAI.js"
 import { exportSVG } from "./export/svgExport.js"
 import { exportPDF } from "./export/pdfExport.js"
+import { heartsRain } from "./effects/heartsRain.js"
+
 
 // ===============================
 // DOM ELEMENTS
 // ===============================
-const replayBtn = document.getElementById("replayBtn")
+
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 
 const warningScreen = document.getElementById("warningScreen")
+const nameScreen = document.getElementById("nameScreen")
+const messageScreen = document.getElementById("messageScreen")
+
 const startBtn = document.getElementById("startBtn")
+const continueBtn = document.getElementById("continueBtn")
+
+const userNameInput = document.getElementById("userName")
+const personalMessage = document.getElementById("personalMessage")
 
 const clearBtn = document.getElementById("clearBtn")
 const savePNGBtn = document.getElementById("savePNGBtn")
 const saveSVGBtn = document.getElementById("saveSVGBtn")
 const savePDFBtn = document.getElementById("savePDFBtn")
 const recognizeBtn = document.getElementById("recognizeBtn")
+const replayBtn = document.getElementById("replayBtn")
 
 const status = document.getElementById("status")
 
@@ -29,18 +39,26 @@ const status = document.getElementById("status")
 
 function resizeCanvas(){
 
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
+const dpr = window.devicePixelRatio || 1
+
+canvas.width = window.innerWidth * dpr
+canvas.height = window.innerHeight * dpr
+
+canvas.style.width = window.innerWidth + "px"
+canvas.style.height = window.innerHeight + "px"
+
+ctx.setTransform(1,0,0,1,0,0)
+ctx.scale(dpr,dpr)
 
 }
 
 resizeCanvas()
 
-window.addEventListener("resize", resizeCanvas)
+window.addEventListener("resize",resizeCanvas)
 
 
 // ===============================
-// GLOBAL DRAWING VARIABLES
+// GLOBAL DRAW VARIABLES
 // ===============================
 
 window.strokes = []
@@ -49,16 +67,46 @@ window.brushSize = 6
 
 
 // ===============================
-// START EXPERIENCE
+// EXPERIENCE FLOW
 // ===============================
 
+// WARNING → NAME
 startBtn.onclick = () => {
 
 warningScreen.style.display = "none"
+nameScreen.style.display = "flex"
 
-status.innerText = "Starting AI hand tracking..."
+}
+
+// NAME → MESSAGE
+continueBtn.onclick = () => {
+
+const name = userNameInput.value.trim()
+
+if(!name){
+alert("Please enter your name")
+return
+}
+
+nameScreen.style.display = "none"
+messageScreen.style.display = "flex"
+
+personalMessage.innerHTML = `
+Hey <b>${name}</b> ❤️<br><br>
+I hope you like this.<br>
+This is specially made for you.<br><br>
+Let's start.
+`
+
+setTimeout(()=>{
+
+messageScreen.style.display="none"
+
+status.innerText="Starting AI hand tracking..."
 
 initHandTracking(canvas,ctx,window.strokes)
+
+},3500)
 
 }
 
@@ -80,8 +128,11 @@ status.innerText = "Canvas cleared"
 savePNGBtn.onclick = () => {
 
 const link = document.createElement("a")
+
 link.download = "love-air-pen.png"
+
 link.href = canvas.toDataURL("image/png")
+
 link.click()
 
 status.innerText = "PNG saved"
@@ -106,13 +157,18 @@ status.innerText = "PDF exported"
 
 }
 
-replayBtn.onclick = ()=>{
+
+replayBtn.onclick = () => {
 
 replayDrawing(canvas,ctx,window.strokes)
 
+status.innerText = "Replaying drawing"
+
 }
+
+
 // ===============================
-// OCR RECOGNITION
+// OCR TEXT RECOGNITION
 // ===============================
 
 recognizeBtn.onclick = async () => {
@@ -123,7 +179,7 @@ const text = await recognizeText(canvas)
 
 if(text){
 
-alert("Detected Text:\n\n" + text)
+alert("Detected Text:\n\n"+text)
 
 }else{
 
@@ -134,12 +190,13 @@ alert("No text detected.")
 }
 
 
-/// =============================
-// ADVANCED VOICE RECOGNITION
+// =============================
+// VOICE COMMAND SYSTEM
 // =============================
 
 const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition
+
 
 if(!SpeechRecognition){
 
@@ -168,8 +225,6 @@ event.results[event.results.length - 1][0].transcript
 .toLowerCase()
 .trim()
 
-console.log("Voice:",command)
-
 handleVoiceCommand(command)
 
 }
@@ -184,188 +239,129 @@ function handleVoiceCommand(cmd){
 console.log("Voice command:",cmd)
 
 
-// ======================
-// CLEAR CANVAS
-// ======================
-
-if(cmd.includes("clear") || cmd.includes("erase")){
-
-clearBtn.click()
-status.innerText = "Canvas cleared"
-return
-
-}
-
-
-// ======================
-// SAVE DRAWING
-// ======================
-
-if(cmd.includes("save")){
-
-savePNGBtn.click()
-status.innerText = "Drawing saved"
-return
-
-}
-
-
-// ======================
-// REPLAY DRAWING
-// ======================
-
+// HEART RAIN
 if(
-cmd.includes("replay") ||
-cmd.includes("replay drawing") ||
-cmd.includes("play drawing")
+cmd.includes("rain of hearts") ||
+cmd.includes("heart rain") ||
+cmd.includes("love rain")
 ){
 
-if(replayBtn){
-replayBtn.click()
-status.innerText = "Replaying drawing"
-}
+status.innerText = "Love is raining..."
+
+heartsRain(canvas)
 
 return
 
 }
 
 
-// ======================
-// OCR TEXT RECOGNITION
-// ======================
+// CLEAR
+if(cmd.includes("clear") || cmd.includes("erase")){
+clearBtn.click()
+return
+}
 
+
+// SAVE
+if(cmd.includes("save")){
+savePNGBtn.click()
+return
+}
+
+
+// REPLAY
+if(cmd.includes("replay")){
+replayBtn.click()
+return
+}
+
+
+// OCR
 if(
 cmd.includes("recognize") ||
-cmd.includes("recognize text") ||
 cmd.includes("detect text") ||
 cmd.includes("read text")
 ){
-
 recognizeBtn.click()
-status.innerText = "Analyzing handwriting"
-
 return
-
 }
 
 
-// ======================
-// RESET COLOR TO DEFAULT
-// ======================
-
-if(
-cmd.includes("default color") ||
-cmd.includes("reset color") ||
-cmd.includes("color default") ||
-cmd.includes("change color to default")
-){
-
+// DEFAULT COLOR
+if(cmd.includes("default color") || cmd.includes("reset color")){
 window.currentColor = "#ff2d8f"
-
 status.innerText = "Color reset to default"
-
 return
-
 }
 
 
-// ======================
-// COLOR COMMANDS
-// ======================
-
+// COLORS
 if(cmd.includes("red")){
-
 window.currentColor = "#ff4b4b"
-status.innerText = "Color changed to red"
+status.innerText = "Color red"
 return
-
 }
 
 if(cmd.includes("blue")){
-
 window.currentColor = "#4b8bff"
-status.innerText = "Color changed to blue"
+status.innerText = "Color blue"
 return
-
 }
 
 if(cmd.includes("green")){
-
 window.currentColor = "#4bff7a"
-status.innerText = "Color changed to green"
+status.innerText = "Color green"
 return
-
 }
 
 if(cmd.includes("yellow")){
-
 window.currentColor = "#f4c542"
-status.innerText = "Color changed to yellow"
+status.innerText = "Color yellow"
 return
-
 }
+
 if(cmd.includes("pink")){
-
 window.currentColor = "#ff2d8f"
-status.innerText = "Color changed to red"
+status.innerText = "Color pink"
 return
-
 }
 
 
-// ======================
 // BRUSH SIZE
-// ======================
-
-if(
-cmd.includes("bigger") ||
-cmd.includes("increase brush") ||
-cmd.includes("larger brush")
-){
-
+if(cmd.includes("bigger") || cmd.includes("increase brush")){
 window.brushSize += 2
-
-status.innerText = "Brush size increased"
-
+status.innerText = "Brush bigger"
 return
-
 }
 
-if(
-cmd.includes("smaller") ||
-cmd.includes("decrease brush") ||
-cmd.includes("reduce brush")
-){
-
+if(cmd.includes("smaller") || cmd.includes("reduce brush")){
 window.brushSize = Math.max(2,window.brushSize-2)
-
-status.innerText = "Brush size decreased"
-
+status.innerText = "Brush smaller"
 return
-
 }
 
 }
+
+
+// =============================
 // ERROR HANDLING
+// =============================
 
 recognition.onerror = (event)=>{
-
 console.warn("Voice error:",event.error)
-
 }
 
 
-// AUTO RESTART
+// =============================
+// AUTO RESTART LISTENING
+// =============================
 
 recognition.onend = ()=>{
-
 recognition.start()
-
 }
 
 
-// START LISTENING
-
+// START VOICE SYSTEM
 recognition.start()
 
 }

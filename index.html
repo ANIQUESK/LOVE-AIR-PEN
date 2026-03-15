@@ -15,19 +15,10 @@
 
 <link rel="stylesheet" href="style.css">
 
-<!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
-<!-- ========================= -->
-<!-- MEDIAPIPE HAND TRACKING -->
-<!-- ========================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-
-<!-- ========================= -->
-<!-- TESSERACT OCR -->
-<!-- ========================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -35,23 +26,17 @@
 
 <body>
 
-<!-- ========================= -->
 <!-- FLOATING HEART BACKGROUND -->
-<!-- ========================= -->
 
 <div class="hearts" id="hearts"></div>
 
 
-<!-- ========================= -->
 <!-- VIDEO INPUT -->
-<!-- ========================= -->
 
 <video id="video" autoplay playsinline></video>
 
 
-<!-- ========================= -->
 <!-- WARNING SCREEN -->
-<!-- ========================= -->
 
 <div id="warningScreen">
 
@@ -71,16 +56,48 @@ So write with love and positivity.
 </div>
 
 
-<!-- ========================= -->
+<!-- NAME INPUT SCREEN (NEW) -->
+
+<div id="nameScreen" style="display:none;">
+
+<div class="nameBox">
+
+<h1>✨ One Last Thing</h1>
+
+<p>Enter your name</p>
+
+<input
+id="userName"
+type="text"
+placeholder="Your Name"
+/>
+
+<button id="continueBtn">Continue</button>
+
+</div>
+
+</div>
+
+
+<!-- PERSONAL MESSAGE SCREEN (NEW) -->
+
+<div id="messageScreen" style="display:none;">
+
+<div class="messageBox">
+
+<p id="personalMessage"></p>
+
+</div>
+
+</div>
+
+
 <!-- DRAWING CANVAS -->
-<!-- ========================= -->
 
 <canvas id="canvas"></canvas>
 
 
-<!-- ========================= -->
 <!-- CONTROL PANEL -->
-<!-- ========================= -->
 
 <div class="panel">
 
@@ -97,26 +114,76 @@ So write with love and positivity.
 <button id="recognizeBtn">Recognize Text</button>
 
 <button id="replayBtn">Replay Drawing</button>
+
 </div>
 
 
-<!-- ========================= -->
 <!-- STATUS BAR -->
-<!-- ========================= -->
 
 <div id="status">Initializing AI...</div>
 
 
-<!-- ========================= -->
 <!-- MAIN APPLICATION -->
-<!-- ========================= -->
 
 <script type="module" src="app.js"></script>
 
 
-<!-- ========================= -->
+<!-- INTRO FLOW SCRIPT -->
+
+<script>
+
+const warningScreen = document.getElementById("warningScreen")
+const nameScreen = document.getElementById("nameScreen")
+const messageScreen = document.getElementById("messageScreen")
+
+const startBtn = document.getElementById("startBtn")
+const continueBtn = document.getElementById("continueBtn")
+
+const userNameInput = document.getElementById("userName")
+const personalMessage = document.getElementById("personalMessage")
+
+// WARNING → NAME SCREEN
+startBtn.onclick = () => {
+
+warningScreen.style.display = "none"
+nameScreen.style.display = "flex"
+
+}
+
+// NAME → MESSAGE
+continueBtn.onclick = () => {
+
+const name = userNameInput.value.trim()
+
+if(name === ""){
+
+alert("Please enter your name")
+return
+
+}
+
+nameScreen.style.display = "none"
+messageScreen.style.display = "flex"
+
+personalMessage.innerHTML =
+`Hey <b>${name}</b> ❤️<br><br>
+I hope you like this.<br>
+This is specially made for you.<br><br>
+Let's start.`
+
+// message visible 3 sec
+setTimeout(()=>{
+
+messageScreen.style.display="none"
+
+},3500)
+
+}
+
+</script>
+
+
 <!-- HEART BACKGROUND SCRIPT -->
-<!-- ========================= -->
 
 <script>
 
@@ -142,7 +209,6 @@ heart.remove()
 
 }
 
-// spawn hearts continuously
 setInterval(createHeart,800)
 
 </script>
