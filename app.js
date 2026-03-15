@@ -94,7 +94,7 @@ messageScreen.style.display = "flex"
 personalMessage.innerHTML = `
 Hey <b>${name}</b> ❤️<br><br>
 I hope you like this.<br>
-This is specially made for you.<br><br>
+This is specially made for you by Anique Shaikh.<br><br>
 Let's start.
 `
 
