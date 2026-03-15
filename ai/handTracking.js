@@ -5,7 +5,11 @@ export async function initHandTracking(canvas, ctx, strokes){
 const video = document.getElementById("video")
 const status = document.getElementById("status")
 
-// -------- CAMERA SETTINGS (better accuracy) --------
+try{
+
+// ==============================
+// CAMERA INITIALIZATION
+// ==============================
 
 const stream = await navigator.mediaDevices.getUserMedia({
 
@@ -21,7 +25,19 @@ facingMode:"user"
 video.srcObject = stream
 await video.play()
 
-// -------- MEDIAPIPE HAND MODEL --------
+}catch(err){
+
+console.error("Camera error:",err)
+status.innerText = "Camera access denied"
+
+return
+
+}
+
+
+// ==============================
+// MEDIAPIPE HAND MODEL
+// ==============================
 
 const hands = new Hands({
 
@@ -34,7 +50,7 @@ hands.setOptions({
 
 maxNumHands:1,
 
-// higher model complexity = better accuracy
+// higher = more accurate
 modelComplexity:1,
 
 // stronger detection threshold
@@ -46,24 +62,30 @@ minTrackingConfidence:0.8
 })
 
 
-// -------- SMOOTHING VARIABLES --------
+// ==============================
+// SMOOTHING VARIABLES
+// ==============================
 
 let lastX = null
 let lastY = null
 
+// exponential smoothing factor
 const smoothingFactor = 0.35
 
 
+// ==============================
+// RESULT CALLBACK
+// ==============================
+
 hands.onResults(results=>{
 
-// smooth coordinates before sending to drawing engine
-
-if(results.multiHandLandmarks && results.multiHandLandmarks.length > 0){
+if(results.multiHandLandmarks && results.multiHandLandmarks.length>0){
 
 const hand = results.multiHandLandmarks[0]
 
 const index = hand[8]
 
+// convert normalized coordinates
 let x = index.x * canvas.width
 let y = index.y * canvas.height
 
@@ -80,7 +102,7 @@ lastY = lastY + (y - lastY) * smoothingFactor
 
 }
 
-// override landmark position with smoothed values
+// override landmark with smoothed position
 hand[8].x = lastX / canvas.width
 hand[8].y = lastY / canvas.height
 
@@ -91,11 +113,21 @@ gestureEngine(results, canvas, ctx, strokes)
 })
 
 
-// -------- MAIN DETECTION LOOP --------
+// ==============================
+// DETECTION LOOP
+// ==============================
 
 async function detect(){
 
+try{
+
 await hands.send({image:video})
+
+}catch(err){
+
+console.warn("Tracking frame error:",err)
+
+}
 
 requestAnimationFrame(detect)
 
@@ -103,6 +135,6 @@ requestAnimationFrame(detect)
 
 detect()
 
-status.innerText = "AI Ready"
+status.innerText = "AI Hand Tracking Ready"
 
 }

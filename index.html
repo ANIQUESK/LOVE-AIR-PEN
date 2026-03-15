@@ -4,22 +4,54 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Love Air Pen</title>
+
+<meta name="description" content="Write in the air. Turn thoughts into reality. Love Air Pen uses AI hand tracking to draw with gestures.">
+<meta name="theme-color" content="#ff2d8f">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❤️</text></svg>">
 
 <link rel="stylesheet" href="style.css">
 
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- ========================= -->
+<!-- MEDIAPIPE HAND TRACKING -->
+<!-- ========================= -->
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<!-- ========================= -->
+<!-- TESSERACT OCR -->
+<!-- ========================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 </head>
 
 <body>
 
-<!-- animated hearts background -->
+<!-- ========================= -->
+<!-- FLOATING HEART BACKGROUND -->
+<!-- ========================= -->
+
 <div class="hearts" id="hearts"></div>
 
+
+<!-- ========================= -->
+<!-- VIDEO INPUT -->
+<!-- ========================= -->
+
 <video id="video" autoplay playsinline></video>
+
+
+<!-- ========================= -->
 <!-- WARNING SCREEN -->
+<!-- ========================= -->
 
 <div id="warningScreen">
 
@@ -32,35 +64,65 @@ Whatever you write here may become real.<br>
 So write with love and positivity.
 </p>
 
-<button id="startBtn">OK, I Understand</button>
+<button id="startBtn">Enter Experience</button>
 
 </div>
 
 </div>
+
+
+<!-- ========================= -->
+<!-- DRAWING CANVAS -->
+<!-- ========================= -->
+
 <canvas id="canvas"></canvas>
+
+
+<!-- ========================= -->
+<!-- CONTROL PANEL -->
+<!-- ========================= -->
 
 <div class="panel">
 
 <h1>❤️ Love Air Pen</h1>
 
 <button id="clearBtn">Clear</button>
+
 <button id="savePNGBtn">Save PNG</button>
+
 <button id="saveSVGBtn">Export SVG</button>
+
 <button id="savePDFBtn">Export PDF</button>
 
+<button id="recognizeBtn">Recognize Text</button>
+
+<button id="replayBtn">Replay Drawing</button>
 </div>
 
-<div id="status">Spreading love...</div>
+
+<!-- ========================= -->
+<!-- STATUS BAR -->
+<!-- ========================= -->
+
+<div id="status">Initializing AI...</div>
+
+
+<!-- ========================= -->
+<!-- MAIN APPLICATION -->
+<!-- ========================= -->
 
 <script type="module" src="app.js"></script>
 
-<script>
 
-// generate floating hearts
+<!-- ========================= -->
+<!-- HEART BACKGROUND SCRIPT -->
+<!-- ========================= -->
+
+<script>
 
 const heartsContainer = document.getElementById("hearts")
 
-for(let i=0;i<25;i++){
+function createHeart(){
 
 const heart = document.createElement("div")
 
@@ -68,15 +130,23 @@ heart.className = "heart"
 
 heart.style.left = Math.random()*100 + "vw"
 
-heart.style.animationDuration = (6 + Math.random()*8) + "s"
+heart.style.animationDuration = (6 + Math.random()*10) + "s"
 
-heart.style.fontSize = (16 + Math.random()*20) + "px"
+heart.style.fontSize = (14 + Math.random()*24) + "px"
 
 heartsContainer.appendChild(heart)
 
+setTimeout(()=>{
+heart.remove()
+},15000)
+
 }
 
+// spawn hearts continuously
+setInterval(createHeart,800)
+
 </script>
+
 
 </body>
 </html>

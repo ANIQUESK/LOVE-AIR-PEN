@@ -1,3 +1,7 @@
+// ===============================
+// STATE
+// ===============================
+
 let drawing = false
 let currentStroke = []
 
@@ -5,38 +9,51 @@ let smoothX = null
 let smoothY = null
 
 let lastPinch = false
-
 const pinchThreshold = 0.05
 
-// stabilizer buffer
+// smoothing buffer
 let buffer = []
 const bufferSize = 6
 
-// board animation
+// neon board pulse
 let pulse = 0
 
 // background hearts
 let bgHearts = []
 
+// sparkle particles
+let particles = []
 
-// ---------- SPAWN HEART ----------
+// replay protection
+window.replayMode = false
+
+// UI click protection
+let lastUIClick = 0
+const uiClickCooldown = 600 // ms
+
+
+
+// ===============================
+// HEART SPAWN
+// ===============================
 
 function spawnBGHeart(canvas){
 
 bgHearts.push({
-
 x: Math.random()*canvas.width,
 y: canvas.height + 20,
-size: 10 + Math.random()*10,
-speed: 0.5 + Math.random()*1,
+size: 12 + Math.random()*12,
+speed: 0.5 + Math.random()*1.2,
 alpha: 0.4
-
 })
 
 }
 
 
-// ---------- DRAW BACKGROUND HEARTS ----------
+
+// ===============================
+// DRAW HEARTS
+// ===============================
 
 function drawBGHearts(ctx){
 
@@ -51,7 +68,7 @@ ctx.fillText("❤",h.x,h.y)
 
 h.y -= h.speed
 
-if(h.y < -20){
+if(h.y < -30){
 bgHearts.splice(i,1)
 }
 
@@ -60,7 +77,57 @@ bgHearts.splice(i,1)
 }
 
 
-// ---------- DRAW SMOOTH CURVE ----------
+
+// ===============================
+// PARTICLE EFFECT
+// ===============================
+
+function spawnParticles(x,y){
+
+for(let i=0;i<2;i++){
+
+particles.push({
+x:x,
+y:y,
+vx:(Math.random()-0.5)*2,
+vy:(Math.random()-0.5)*2,
+life:20
+})
+
+}
+
+}
+
+
+function drawParticles(ctx){
+
+for(let i=particles.length-1;i>=0;i--){
+
+const p = particles[i]
+
+p.x += p.vx
+p.y += p.vy
+p.life--
+
+ctx.beginPath()
+ctx.arc(p.x,p.y,2,0,Math.PI*2)
+
+ctx.fillStyle="rgba(255,120,180,"+(p.life/30)+")"
+ctx.fill()
+
+if(p.life<=0){
+particles.splice(i,1)
+}
+
+}
+
+}
+
+
+
+// ===============================
+// STROKE DRAWING
+// ===============================
 
 function drawStroke(ctx, stroke){
 
@@ -83,12 +150,23 @@ yc
 
 }
 
+// glow layer
+ctx.lineWidth = (window.brushSize || 6) + 3
+ctx.globalAlpha = 0.25
+ctx.stroke()
+
+// main stroke
+ctx.lineWidth = window.brushSize || 6
+ctx.globalAlpha = 1
 ctx.stroke()
 
 }
 
 
-// ---------- STABILIZER ----------
+
+// ===============================
+// POINT STABILIZATION
+// ===============================
 
 function stabilizePoint(x,y){
 
@@ -114,22 +192,74 @@ return {x:avgX,y:avgY}
 }
 
 
-// ---------- MAIN ENGINE ----------
+
+// ===============================
+// UI BUTTON INTERACTION
+// ===============================
+
+function checkUIButtonClick(x, y, isPinching){
+
+const buttons = document.querySelectorAll(".panel button")
+let hoveringAny = false
+
+buttons.forEach(btn => {
+
+const rect = btn.getBoundingClientRect()
+
+const inside =
+x >= rect.left &&
+x <= rect.right &&
+y >= rect.top &&
+y <= rect.bottom
+
+if(inside){
+
+hoveringAny = true
+btn.classList.add("active")
+
+// click with pinch
+if(isPinching && Date.now() - lastUIClick > uiClickCooldown){
+
+btn.click()
+lastUIClick = Date.now()
+
+}
+
+}else{
+
+btn.classList.remove("active")
+
+}
+
+})
+
+return hoveringAny
+
+}
+
+
+
+// ===============================
+// MAIN ENGINE
+// ===============================
 
 export function gestureEngine(results, canvas, ctx, strokes){
 
-// animate board glow
+if(window.replayMode) return
+
+
+// animated board glow
 
 pulse += 0.02
 
-let base = 26
-let glow = base + Math.sin(pulse)*4
+let base = 20
+let glow = base + Math.sin(pulse)*3
 
 ctx.fillStyle = "rgb("+glow+",0,"+glow+")"
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
 
-// spawn background hearts slowly
+// spawn hearts occasionally
 
 if(Math.random() < 0.02){
 spawnBGHeart(canvas)
@@ -138,27 +268,32 @@ spawnBGHeart(canvas)
 drawBGHearts(ctx)
 
 
+// no hand detected
+
 if(!results.multiHandLandmarks || results.multiHandLandmarks.length===0){
 
 drawing=false
 lastPinch=false
 buffer=[]
+
 return
 
 }
+
 
 const hand = results.multiHandLandmarks[0]
 
 const index = hand[8]
 const thumb = hand[4]
 
-// convert coords
+
+// convert coordinates
 
 let x = index.x * canvas.width
 let y = index.y * canvas.height
 
 
-// stabilize movement
+// smoothing
 
 const stabilized = stabilizePoint(x,y)
 
@@ -168,26 +303,30 @@ smoothY = stabilized.y
 
 // brush style
 
-ctx.strokeStyle = "#ff2d8f"
+ctx.strokeStyle = window.currentColor || "#ff2d8f"
 ctx.lineWidth = window.brushSize || 6
 
 ctx.lineCap = "round"
 ctx.lineJoin = "round"
 
-ctx.shadowColor = "#ff2d8f"
-ctx.shadowBlur = 35
+ctx.shadowColor = ctx.strokeStyle
+ctx.shadowBlur = 12
 
 
-// cursor
+// cursor glow
 
 ctx.beginPath()
-ctx.arc(smoothX, smoothY, 5, 0, Math.PI*2)
+ctx.arc(smoothX, smoothY, 4, 0, Math.PI*2)
 
-ctx.fillStyle = "#ff2d8f"
-ctx.shadowColor = "#ff2d8f"
-ctx.shadowBlur = 40
-
+ctx.fillStyle = ctx.strokeStyle
+ctx.shadowBlur = 10
 ctx.fill()
+
+
+// particles
+
+spawnParticles(smoothX,smoothY)
+drawParticles(ctx)
 
 
 // pinch detection
@@ -200,7 +339,18 @@ index.y - thumb.y
 const isPinching = pinch < pinchThreshold
 
 
-// draw strokes
+// ===============================
+// UI INTERACTION
+// ===============================
+
+const hoveringUI = checkUIButtonClick(smoothX, smoothY, isPinching)
+
+
+// ===============================
+// DRAWING LOGIC
+// ===============================
+
+if(!hoveringUI){
 
 if(isPinching){
 
@@ -220,6 +370,8 @@ y:smoothY
 }else{
 
 drawing=false
+
+}
 
 }
 
