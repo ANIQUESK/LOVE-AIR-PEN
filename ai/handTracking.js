@@ -14,66 +14,57 @@ let running = true
 try{
 
 const stream = await navigator.mediaDevices.getUserMedia({
-
 video:{
 width:{ideal:1280},
 height:{ideal:720},
 frameRate:{ideal:60},
 facingMode:"user"
 }
-
 })
 
 video.srcObject = stream
-
 await video.play()
 
 }catch(err){
 
 console.error("Camera error:",err)
-
 status.innerText = "Camera access denied"
-
 return
 
 }
 
 
 // ==============================
-// MEDIAPIPE HAND MODEL
+// MEDIAPIPE MODEL
 // ==============================
 
 const hands = new Hands({
-
-locateFile:(file)=>
-`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-
+locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 })
 
 hands.setOptions({
-
 maxNumHands:1,
-
 modelComplexity:1,
-
 minDetectionConfidence:0.75,
 minTrackingConfidence:0.75
-
 })
 
 
 // ==============================
-// POSITION SMOOTHING
+// STABILIZATION VARIABLES
 // ==============================
 
-let lastX = null
-let lastY = null
+let filteredX = null
+let filteredY = null
 
 let velocityX = 0
 let velocityY = 0
 
-const smoothing = 0.45
-const velocitySmoothing = 0.2
+let lastTime = performance.now()
+
+const jitterThreshold = 1.5
+const baseSmoothing = 0.45
+const velocitySmoothing = 0.18
 
 
 // ==============================
@@ -84,60 +75,71 @@ hands.onResults(results=>{
 
 if(!running) return
 
-
-// no hand detected
+// No hand detected
 if(!results.multiHandLandmarks ||
 results.multiHandLandmarks.length === 0){
 
-lastX = null
-lastY = null
+filteredX = null
+filteredY = null
 
 gestureEngine(results,canvas,ctx,strokes)
-
 return
-
 }
 
-
 const hand = results.multiHandLandmarks[0]
-
 const index = hand[8]
 
 
-// convert normalized coords
+// Convert coordinates
+let rawX = index.x * canvas.width
+let rawY = index.y * canvas.height
 
-let x = index.x * canvas.width
-let y = index.y * canvas.height
+
+const now = performance.now()
+const dt = Math.max((now-lastTime)/16,1)
+lastTime = now
 
 
-// initialize
-if(lastX === null){
+// Initialize
+if(filteredX === null){
 
-lastX = x
-lastY = y
+filteredX = rawX
+filteredY = rawY
 
 }
 
 
-// velocity smoothing
+// Velocity estimation
+let dx = rawX-filteredX
+let dy = rawY-filteredY
 
-velocityX = velocityX*(1-velocitySmoothing) +
-(x-lastX)*velocitySmoothing
-
-velocityY = velocityY*(1-velocitySmoothing) +
-(y-lastY)*velocitySmoothing
-
-
-// position smoothing
-
-lastX = lastX + velocityX*smoothing
-lastY = lastY + velocityY*smoothing
+velocityX = velocityX*(1-velocitySmoothing) + dx*velocitySmoothing
+velocityY = velocityY*(1-velocitySmoothing) + dy*velocitySmoothing
 
 
-// overwrite landmark with smoothed value
+// Motion prediction
+let predictedX = rawX + velocityX*0.6
+let predictedY = rawY + velocityY*0.6
 
-hand[8].x = lastX / canvas.width
-hand[8].y = lastY / canvas.height
+
+// Dynamic smoothing
+let speed = Math.sqrt(dx*dx+dy*dy)
+
+let smoothing = speed > 10 ? 0.35 : baseSmoothing
+
+
+filteredX += (predictedX-filteredX)*smoothing
+filteredY += (predictedY-filteredY)*smoothing
+
+
+// Jitter suppression
+if(Math.abs(filteredX-rawX) < jitterThreshold) filteredX = rawX
+if(Math.abs(filteredY-rawY) < jitterThreshold) filteredY = rawY
+
+
+// Update landmark
+hand[8].x = filteredX / canvas.width
+hand[8].y = filteredY / canvas.height
 
 
 gestureEngine(results,canvas,ctx,strokes)
@@ -159,7 +161,7 @@ await hands.send({image:video})
 
 }catch(err){
 
-console.warn("Tracking frame error:",err)
+console.warn("Tracking error:",err)
 
 }
 
