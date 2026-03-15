@@ -234,21 +234,28 @@ panelBtn.onclick = () => {
   const handle = document.getElementById("panel-drag")
   let dragging = false, ox = 0, oy = 0
 
-  handle.addEventListener("mousedown", e => {
+  function startDrag(cx, cy){
     dragging = true
     const rect = panel.getBoundingClientRect()
-    ox = e.clientX - rect.left
-    oy = e.clientY - rect.top
+    ox = cx - rect.left; oy = cy - rect.top
     panel.style.transition = "none"
-  })
-  window.addEventListener("mousemove", e => {
+  }
+  function moveDrag(cx, cy){
     if(!dragging) return
-    panel.style.left = Math.max(0, Math.min(window.innerWidth-panel.offsetWidth,  e.clientX - ox)) + "px"
-    panel.style.top  = Math.max(0, Math.min(window.innerHeight-panel.offsetHeight, e.clientY - oy)) + "px"
-  })
-  window.addEventListener("mouseup", () => {
-    dragging = false; panel.style.transition = ""
-  })
+    panel.style.left = Math.max(0, Math.min(window.innerWidth  - panel.offsetWidth,  cx - ox)) + "px"
+    panel.style.top  = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, cy - oy)) + "px"
+  }
+  function endDrag(){ dragging = false; panel.style.transition = "" }
+
+  // Mouse
+  handle.addEventListener("mousedown",  e => startDrag(e.clientX, e.clientY))
+  window.addEventListener("mousemove",  e => moveDrag(e.clientX, e.clientY))
+  window.addEventListener("mouseup",    endDrag)
+
+  // Touch
+  handle.addEventListener("touchstart", e => { e.preventDefault(); const t=e.touches[0]; startDrag(t.clientX, t.clientY) }, {passive:false})
+  window.addEventListener("touchmove",  e => { if(!dragging) return; e.preventDefault(); const t=e.touches[0]; moveDrag(t.clientX, t.clientY) }, {passive:false})
+  window.addEventListener("touchend",   endDrag)
 })()
 
 // ════════════════════════════════════════════════════════════

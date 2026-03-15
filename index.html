@@ -2,10 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Love Air Pen ❤️ — by Anique</title>
 <meta name="description" content="Write in the air. Draw with your soul. An AI love letter in code.">
 <meta name="theme-color" content="#ff2d8f">
+<!-- iOS PWA / Safari fixes -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Love Air Pen">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+  input, button { touch-action: manipulation; }
+  body { touch-action: none; }
+</style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❤️</text></svg>">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -252,8 +262,62 @@
   </div>
 </div>
 
+<!-- ════════ CAMERA PERMISSION TIP (mobile) ════════ -->
+<div id="cam-tip" class="cam-tip" style="display:none">
+  <span>📷</span>
+  <span>Allow camera access when prompted — it's needed for hand tracking.</span>
+  <button id="cam-tip-close">✕</button>
+</div>
+
+<!-- ════════ ADD TO HOME SCREEN BANNER ════════ -->
+<div id="a2hs-banner" class="a2hs-banner" style="display:none">
+  <span>❤️</span>
+  <span>Add to Home Screen for the best experience!</span>
+  <button id="a2hs-install">Add</button>
+  <button id="a2hs-dismiss">✕</button>
+</div>
+
 <!-- ════════ MAIN SCRIPT ════════ -->
 <script type="module" src="app.js"></script>
+
+<!-- Mobile helpers -->
+<script>
+// Show camera tip on mobile before experience starts
+;(function(){
+  const isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+  if(!isMobile) return
+  const tip=document.getElementById("cam-tip")
+  tip.style.display="flex"
+  document.getElementById("cam-tip-close").onclick=()=>tip.style.display="none"
+  // Auto-hide after 6s
+  setTimeout(()=>tip.style.display="none",6000)
+})()
+
+// PWA install prompt
+let deferredPrompt=null
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault(); deferredPrompt=e
+  const banner=document.getElementById("a2hs-banner")
+  banner.style.display="flex"
+  document.getElementById("a2hs-install").onclick=()=>{
+    deferredPrompt.prompt(); banner.style.display="none"
+  }
+  document.getElementById("a2hs-dismiss").onclick=()=>banner.style.display="none"
+})
+
+// Prevent default touch scrolling on canvas
+document.getElementById("canvas").addEventListener("touchstart",e=>e.preventDefault(),{passive:false})
+document.getElementById("canvas").addEventListener("touchmove", e=>e.preventDefault(),{passive:false})
+document.getElementById("canvas").addEventListener("touchend",  e=>e.preventDefault(),{passive:false})
+
+// Prevent double-tap zoom
+let lastTap=0
+document.addEventListener("touchend",e=>{
+  const now=Date.now()
+  if(now-lastTap<320){e.preventDefault()}
+  lastTap=now
+},{passive:false})
+</script>
 
 <!-- ════════ STARFIELD + PETALS ════════ -->
 <script>
