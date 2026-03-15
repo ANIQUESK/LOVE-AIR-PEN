@@ -1,354 +1,570 @@
-import { replayDrawing } from "./effects/replaySystem.js"
+// ════════════════════════════════════════════════════════════
+// LOVE AIR PEN v3 — Peak Level App Controller
+// ════════════════════════════════════════════════════════════
+
 import { initHandTracking } from "./ai/handTracking.js"
-import { recognizeText } from "./ai/handwritingAI.js"
-import { exportSVG } from "./export/svgExport.js"
-import { exportPDF } from "./export/pdfExport.js"
-import { heartsRain } from "./effects/heartsRain.js"
+import { recognizeText }    from "./ai/handwritingAI.js"
+import { exportSVG }        from "./export/svgExport.js"
+import { exportPDF }        from "./export/pdfExport.js"
+import { heartsRain }       from "./effects/heartsRain.js"
+import { fireworks }        from "./effects/fireworks.js"
+import { confettiBurst }    from "./effects/confetti.js"
+import { replayDrawing }    from "./effects/replaySystem.js"
 
+// ════════════════════════════════════════════════════════════
+// DOM
+// ════════════════════════════════════════════════════════════
 
-// ===============================
-// DOM ELEMENTS
-// ===============================
+const canvas  = document.getElementById("canvas")
+const ctx     = canvas.getContext("2d")
 
-const canvas = document.getElementById("canvas")
-const ctx = canvas.getContext("2d")
+// ════════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ════════════════════════════════════════════════════════════
 
-const startBtn = document.getElementById("startBtn")
-const continueBtn = document.getElementById("continueBtn")
+window.APP = {
+  strokes:      [],
+  redoStack:    [],
+  currentColor: "#ff2d8f",
+  brushSize:    6,
+  opacity:      1.0,
+  brushStyle:   "smooth",
+  bgTheme:      "dark",
+  replayMode:   false,
+  handActive:   false,
+  userName:     "",
+}
 
-const warningScreen = document.getElementById("warningScreen")
-const nameScreen = document.getElementById("nameScreen")
-const messageScreen = document.getElementById("messageScreen")
+// Background themes
+const BG_THEMES = {
+  dark:     { r:8,  g:0,  b:12 },
+  rose:     { r:18, g:0,  b:12 },
+  midnight: { r:4,  g:6,  b:20 },
+  forest:   { r:4,  g:12, b:5  },
+}
 
-const userNameInput = document.getElementById("userName")
-const personalMessage = document.getElementById("personalMessage")
-
-const clearBtn = document.getElementById("clearBtn")
-const savePNGBtn = document.getElementById("savePNGBtn")
-const saveSVGBtn = document.getElementById("saveSVGBtn")
-const savePDFBtn = document.getElementById("savePDFBtn")
-const recognizeBtn = document.getElementById("recognizeBtn")
-const replayBtn = document.getElementById("replayBtn")
-
-const status = document.getElementById("status")
-
-
-// ===============================
-// CANVAS SETUP
-// ===============================
+// ════════════════════════════════════════════════════════════
+// CANVAS
+// ════════════════════════════════════════════════════════════
 
 function resizeCanvas(){
-
-const dpr = window.devicePixelRatio || 1
-
-canvas.width = window.innerWidth * dpr
-canvas.height = window.innerHeight * dpr
-
-canvas.style.width = window.innerWidth + "px"
-canvas.style.height = window.innerHeight + "px"
-
-ctx.setTransform(1,0,0,1,0,0)
-ctx.scale(dpr,dpr)
-
+  const dpr = window.devicePixelRatio || 1
+  canvas.width  = window.innerWidth  * dpr
+  canvas.height = window.innerHeight * dpr
+  canvas.style.width  = window.innerWidth  + "px"
+  canvas.style.height = window.innerHeight + "px"
+  ctx.setTransform(1,0,0,1,0,0)
+  ctx.scale(dpr, dpr)
 }
 
 resizeCanvas()
+window.addEventListener("resize", resizeCanvas)
 
-window.addEventListener("resize",resizeCanvas)
+// ════════════════════════════════════════════════════════════
+// STATUS
+// ════════════════════════════════════════════════════════════
 
+const statusDot  = document.getElementById("status-dot")
+const statusText = document.getElementById("status-txt")
 
-// ===============================
-// GLOBAL DRAW VARIABLES
-// ===============================
-
-window.strokes = []
-window.currentColor = "#ff2d8f"
-window.brushSize = 6
-
-
-// ===============================
-// EXPERIENCE FLOW
-// ===============================
-
-startBtn.onclick = ()=>{
-
-warningScreen.style.display="none"
-nameScreen.style.display="flex"
-
+export function setStatus(msg, type = "info"){
+  statusText.textContent = msg
+  statusDot.className    = "sdot " + type
 }
 
-continueBtn.onclick = ()=>{
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
 
-const name = userNameInput.value.trim()
-
-if(!name){
-
-alert("Please enter your name")
-return
-
+export function toast(msg, ms = 2400){
+  document.querySelectorAll(".toast").forEach(t => t.remove())
+  const el = document.createElement("div")
+  el.className   = "toast"
+  el.textContent = msg
+  document.body.appendChild(el)
+  setTimeout(() => {
+    el.classList.add("out")
+    setTimeout(() => el.remove(), 350)
+  }, ms)
 }
 
-nameScreen.style.display="none"
-messageScreen.style.display="flex"
+// ════════════════════════════════════════════════════════════
+// LOVE NOTES — Romantic quotes
+// ════════════════════════════════════════════════════════════
 
-personalMessage.innerHTML =
-`Hey <b>${name}</b> ❤️<br><br>
-I hope you like this.<br>
-This is specially made for you by Anique Shaikh.<br><br>
-Let's start.`
+const LOVE_NOTES = [
+  {
+    title: "A letter for you",
+    body: `In a world full of noise,\nyou are my favorite sound.\n\nEvery heartbeat I have\nis yours — all of them. ❤`
+  },
+  {
+    title: "What I feel",
+    body: `You are not just someone I love.\nYou are someone I choose,\nagain and again,\nin every quiet moment. 💕`
+  },
+  {
+    title: "Just so you know",
+    body: `The day I met you,\nthe universe rearranged itself\ninto something more beautiful\nthan it had ever been before. 🌸`
+  },
+  {
+    title: "For you, always",
+    body: `Distance means nothing\nwhen someone means everything.\n\nYou mean everything to me. ✨`
+  },
+  {
+    title: "My truth",
+    body: `If I had to choose between\nbreathing and loving you —\nI would use my last breath\nto say your name. 💗`
+  },
+  {
+    title: "From Anique",
+    body: `This entire app —\nevery line of code,\nevery heart, every star —\nwas built just for you. 💌\n\nYou inspire things like this.`
+  }
+]
 
-setTimeout(()=>{
+let noteIndex = 0
 
-messageScreen.style.display="none"
+// ════════════════════════════════════════════════════════════
+// SCREEN TRANSITIONS
+// ════════════════════════════════════════════════════════════
 
-status.innerText="Starting AI hand tracking..."
-
-initHandTracking(canvas,ctx,window.strokes)
-
-},3500)
-
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => {
+    s.classList.remove("active")
+    s.classList.add("exit")
+    setTimeout(() => s.classList.remove("exit"), 600)
+  })
+  const target = document.getElementById(id)
+  if(target){
+    target.classList.remove("exit")
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => target.classList.add("active"))
+    })
+  }
 }
 
+// ════════════════════════════════════════════════════════════
+// SCREEN 1 — OPENING
+// ════════════════════════════════════════════════════════════
 
-// ===============================
-// BUTTON ACTIONS
-// ===============================
+document.getElementById("btn-open-start").onclick = () => showScreen("screen-name")
 
-clearBtn.onclick = ()=>{
+// ════════════════════════════════════════════════════════════
+// SCREEN 2 — NAME INPUT
+// ════════════════════════════════════════════════════════════
 
-window.strokes.length = 0
-ctx.clearRect(0,0,canvas.width,canvas.height)
+const inpName = document.getElementById("inp-name")
+inpName.addEventListener("keydown", e => { if(e.key === "Enter") proceed() })
 
-status.innerText="Canvas cleared"
+document.getElementById("btn-name-continue").onclick = proceed
 
+function proceed(){
+  const name = inpName.value.trim()
+  if(!name){
+    inpName.style.borderColor = "#ff4b4b"
+    inpName.style.boxShadow   = "0 0 0 3px rgba(255,75,75,0.2)"
+    inpName.placeholder       = "Please enter your name ❤"
+    inpName.focus()
+    setTimeout(() => {
+      inpName.style.borderColor = ""
+      inpName.style.boxShadow   = ""
+    }, 1200)
+    return
+  }
+
+  window.APP.userName = name
+  showScreen("screen-message")
+  renderMessage(name)
 }
 
+function renderMessage(name){
+  const el = document.getElementById("msg-text")
+  el.innerHTML = `Hey <b>${esc(name)}</b> ❤️<br><br>` +
+    `This experience was made just for you<br>` +
+    `by <em>Anique Shaikh</em>.<br><br>` +
+    `Raise your hand, bring your index finger<br>` +
+    `and thumb together to draw.<br><br>` +
+    `Let your heart speak freely. ✨`
 
-savePNGBtn.onclick = ()=>{
+  // Mini hearts inside message card
+  spawnCardHearts()
 
-const link = document.createElement("a")
-
-link.download="love-air-pen.png"
-
-link.href = canvas.toDataURL("image/png")
-
-link.click()
-
-status.innerText="PNG saved"
-
+  setTimeout(() => {
+    showScreen(null) // hide all overlays
+    document.querySelectorAll(".screen").forEach(s => {
+      s.style.display = "none"
+    })
+    setStatus("Starting AI hand tracking…", "info")
+    initHandTracking(canvas, ctx, window.APP.strokes, setStatus)
+    setTimeout(() => {
+      document.getElementById("gesture-guide").classList.add("hide")
+    }, 14000)
+  }, 4000)
 }
 
-
-saveSVGBtn.onclick = ()=>{
-
-exportSVG(window.strokes)
-
-status.innerText="SVG exported"
-
+function spawnCardHearts(){
+  const container = document.getElementById("msg-hearts-fx")
+  for(let i = 0; i < 14; i++){
+    setTimeout(() => {
+      const h = document.createElement("div")
+      h.style.cssText =
+        `position:absolute;bottom:0;left:${Math.random()*100}%;` +
+        `font-size:${12+Math.random()*14}px;opacity:0.4;` +
+        `animation:petalFloat ${6+Math.random()*6}s linear forwards`
+      h.textContent = ["❤","💕","✨","💗"][Math.floor(Math.random()*4)]
+      container.appendChild(h)
+      setTimeout(() => h.remove(), 10000)
+    }, i * 200)
+  }
 }
 
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") }
 
-savePDFBtn.onclick = ()=>{
+// ════════════════════════════════════════════════════════════
+// PANEL TOGGLE
+// ════════════════════════════════════════════════════════════
 
-exportPDF(canvas)
+const panel    = document.getElementById("panel")
+const panelBtn = document.getElementById("btn-panel-toggle")
 
-status.innerText="PDF exported"
-
+panelBtn.onclick = () => {
+  panel.classList.toggle("collapsed")
+  panelBtn.style.transform = panel.classList.contains("collapsed") ? "rotate(180deg)" : ""
 }
 
+// Draggable panel (desktop)
+;(function dragPanel(){
+  const handle = document.getElementById("panel-drag")
+  let dragging = false, ox = 0, oy = 0
 
-replayBtn.onclick = ()=>{
+  handle.addEventListener("mousedown", e => {
+    dragging = true
+    const rect = panel.getBoundingClientRect()
+    ox = e.clientX - rect.left
+    oy = e.clientY - rect.top
+    panel.style.transition = "none"
+  })
+  window.addEventListener("mousemove", e => {
+    if(!dragging) return
+    panel.style.left = Math.max(0, Math.min(window.innerWidth-panel.offsetWidth,  e.clientX - ox)) + "px"
+    panel.style.top  = Math.max(0, Math.min(window.innerHeight-panel.offsetHeight, e.clientY - oy)) + "px"
+  })
+  window.addEventListener("mouseup", () => {
+    dragging = false; panel.style.transition = ""
+  })
+})()
 
-replayDrawing(canvas,ctx,window.strokes)
-
-status.innerText="Replaying drawing"
-
-}
-
-
-// ===============================
-// OCR TEXT RECOGNITION
-// ===============================
-
-recognizeBtn.onclick = async ()=>{
-
-status.innerText="Recognizing handwriting..."
-
-const text = await recognizeText(canvas)
-
-if(text){
-
-alert("Detected Text:\n\n"+text)
-
-}else{
-
-alert("No text detected.")
-
-}
-
-}
-
-
-// =============================
-// VOICE COMMAND SYSTEM
-// =============================
-
-const SpeechRecognition =
-window.SpeechRecognition || window.webkitSpeechRecognition
-
-if(!SpeechRecognition){
-
-status.innerText="Voice commands not supported"
-
-}else{
-
-const recognition = new SpeechRecognition()
-
-recognition.continuous = true
-recognition.interimResults = false
-recognition.lang = "en-US"
-
-
-recognition.onstart = ()=>{
-
-status.innerText="Voice assistant listening..."
-
-}
-
-
-recognition.onresult = (event)=>{
-
-const command =
-event.results[event.results.length-1][0].transcript
-.toLowerCase()
-.trim()
-
-handleVoiceCommand(command)
-
-}
-
-
-function handleVoiceCommand(cmd){
-
-console.log("Voice command:",cmd)
-
-
-// HEART RAIN
-if(
-cmd.includes("rain of hearts") ||
-cmd.includes("rain of heart") ||
-cmd.includes("heart rain") ||
-cmd.includes("love rain") ||
-cmd.includes("rain")
-){
-
-status.innerText="Love is raining..."
-
-heartsRain(canvas)
-
-return
-
-}
-
-
-// CLEAR
-if(cmd.includes("clear") || cmd.includes("erase")){
-
-clearBtn.click()
-return
-
-}
-
-
-// SAVE
-if(cmd.includes("save")){
-
-savePNGBtn.click()
-return
-
-}
-
-
-// REPLAY
-if(cmd.includes("replay")){
-
-replayBtn.click()
-return
-
-}
-
-
-// OCR
-if(
-cmd.includes("recognize") ||
-cmd.includes("detect text") ||
-cmd.includes("read text")
-){
-
-recognizeBtn.click()
-return
-
-}
-
-
+// ════════════════════════════════════════════════════════════
 // COLORS
-if(cmd.includes("red")){
-window.currentColor="#ff4b4b"
-return
+// ════════════════════════════════════════════════════════════
+
+document.querySelectorAll(".swatch[data-color]").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"))
+    btn.classList.add("active")
+    window.APP.currentColor = btn.dataset.color
+    toast("🎨 " + btn.title || btn.dataset.color)
+  }
+})
+
+const customColorInput = document.getElementById("inp-custom-color")
+document.getElementById("btn-custom-color").onclick = () => customColorInput.click()
+customColorInput.oninput = () => {
+  window.APP.currentColor = customColorInput.value
+  document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"))
 }
 
-if(cmd.includes("blue")){
-window.currentColor="#4b8bff"
-return
+// ════════════════════════════════════════════════════════════
+// BRUSH SIZE + OPACITY
+// ════════════════════════════════════════════════════════════
+
+const sldBrush   = document.getElementById("sld-brush")
+const lblSize    = document.getElementById("lbl-size")
+const sldOpacity = document.getElementById("sld-opacity")
+const lblOpacity = document.getElementById("lbl-opacity")
+
+sldBrush.oninput = () => {
+  window.APP.brushSize = parseInt(sldBrush.value)
+  lblSize.textContent  = window.APP.brushSize + "px"
 }
 
-if(cmd.includes("green")){
-window.currentColor="#4bff7a"
-return
+sldOpacity.oninput = () => {
+  window.APP.opacity   = parseInt(sldOpacity.value) / 100
+  lblOpacity.textContent = sldOpacity.value + "%"
 }
 
-if(cmd.includes("yellow")){
-window.currentColor="#f4c542"
-return
+// ════════════════════════════════════════════════════════════
+// BRUSH STYLE
+// ════════════════════════════════════════════════════════════
+
+document.querySelectorAll(".style-pill").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".style-pill").forEach(b => b.classList.remove("active"))
+    btn.classList.add("active")
+    window.APP.brushStyle = btn.dataset.style
+    toast("Style: " + btn.textContent.trim())
+  }
+})
+
+// ════════════════════════════════════════════════════════════
+// CANVAS BACKGROUND THEME
+// ════════════════════════════════════════════════════════════
+
+document.querySelectorAll(".bg-pill").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".bg-pill").forEach(b => b.classList.remove("active"))
+    btn.classList.add("active")
+    window.APP.bgTheme = btn.dataset.bg
+    toast("Canvas: " + btn.textContent.trim())
+  }
+})
+
+// ════════════════════════════════════════════════════════════
+// UNDO / REDO
+// ════════════════════════════════════════════════════════════
+
+document.getElementById("btn-undo").onclick = doUndo
+document.getElementById("btn-redo").onclick = doRedo
+
+function doUndo(){
+  if(window.APP.strokes.length === 0){ toast("Nothing to undo"); return }
+  const s = window.APP.strokes.pop()
+  window.APP.redoStack.push(s)
+  toast("↩ Undo")
 }
 
-if(cmd.includes("pink")){
-window.currentColor="#ff2d8f"
-return
+function doRedo(){
+  if(window.APP.redoStack.length === 0){ toast("Nothing to redo"); return }
+  const s = window.APP.redoStack.pop()
+  window.APP.strokes.push(s)
+  toast("↪ Redo")
 }
 
+// ════════════════════════════════════════════════════════════
+// CLEAR
+// ════════════════════════════════════════════════════════════
 
-// BRUSH SIZE
-if(cmd.includes("bigger") || cmd.includes("increase brush")){
-
-window.brushSize += 2
-return
-
+document.getElementById("btn-clear").onclick = () => {
+  if(window.APP.strokes.length === 0){ toast("Canvas is empty"); return }
+  // Save to redo as a batch
+  window.APP.redoStack.push(...window.APP.strokes.splice(0))
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  setStatus("Canvas cleared", "info")
+  toast("🗑 Cleared")
 }
 
-if(cmd.includes("smaller") || cmd.includes("reduce brush")){
+// ════════════════════════════════════════════════════════════
+// REPLAY
+// ════════════════════════════════════════════════════════════
 
-window.brushSize = Math.max(2,window.brushSize-2)
-return
-
+document.getElementById("btn-replay").onclick = () => {
+  if(window.APP.strokes.length === 0){ toast("Draw something first!"); return }
+  setStatus("Replaying…", "info")
+  replayDrawing(canvas, ctx, window.APP.strokes, window.APP.bgTheme)
+  toast("▶ Replaying your masterpiece")
 }
 
+// ════════════════════════════════════════════════════════════
+// SPECIAL FX
+// ════════════════════════════════════════════════════════════
+
+document.getElementById("btn-hearts-rain").onclick = () => {
+  heartsRain(canvas, ctx)
+  setStatus("Love is falling ❤", "info")
+  toast("💕 Love is raining!")
 }
 
-
-recognition.onerror = (event)=>{
-
-console.warn("Voice error:",event.error)
-
+document.getElementById("btn-fireworks").onclick = () => {
+  fireworks(canvas, ctx)
+  toast("🎆 Fireworks for you!")
 }
 
-
-recognition.onend = ()=>{
-
-recognition.start()
-
+document.getElementById("btn-confetti").onclick = () => {
+  confettiBurst(canvas, ctx)
+  toast("🎊 Confetti!")
 }
 
-recognition.start()
-
+document.getElementById("btn-love-note").onclick = () => {
+  const note = LOVE_NOTES[noteIndex % LOVE_NOTES.length]
+  noteIndex++
+  document.getElementById("love-note-title").textContent = note.title
+  document.getElementById("love-note-body").textContent  = note.body
+  document.getElementById("modal-love").style.display = "flex"
 }
+
+document.getElementById("btn-close-love").onclick = () => {
+  document.getElementById("modal-love").style.display = "none"
+}
+
+// ════════════════════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════════════════════
+
+document.getElementById("btn-png").onclick = () => {
+  const ec  = document.createElement("canvas")
+  ec.width  = canvas.width
+  ec.height = canvas.height
+  const ectx = ec.getContext("2d")
+  const bg   = BG_THEMES[window.APP.bgTheme] || BG_THEMES.dark
+  ectx.fillStyle = `rgb(${bg.r},${bg.g},${bg.b})`
+  ectx.fillRect(0, 0, ec.width, ec.height)
+  ectx.drawImage(canvas, 0, 0)
+  const link = document.createElement("a")
+  link.download = "love-air-pen.png"
+  link.href = ec.toDataURL("image/png")
+  link.click()
+  setStatus("PNG saved ✓", "ready")
+  toast("📥 Saved as PNG!")
+}
+
+document.getElementById("btn-svg").onclick = () => {
+  if(window.APP.strokes.length === 0){ toast("Draw something first!"); return }
+  exportSVG(window.APP.strokes, window.APP.bgTheme)
+  toast("📥 SVG exported!")
+}
+
+document.getElementById("btn-pdf").onclick = () => {
+  exportPDF(canvas, window.APP.bgTheme)
+  toast("📥 PDF exported!")
+}
+
+// ════════════════════════════════════════════════════════════
+// OCR
+// ════════════════════════════════════════════════════════════
+
+document.getElementById("btn-ocr").onclick = async () => {
+  setStatus("Analyzing your handwriting…", "info")
+  const text = await recognizeText(canvas, setStatus)
+  document.getElementById("ocr-result").textContent =
+    text || "No text detected. Try writing with more contrast."
+  document.getElementById("modal-ocr").style.display = "flex"
+}
+
+document.getElementById("btn-close-ocr").onclick = () => {
+  document.getElementById("modal-ocr").style.display = "none"
+}
+
+document.querySelectorAll(".modal-veil").forEach(m => {
+  m.onclick = e => { if(e.target === m) m.style.display = "none" }
+})
+
+// ════════════════════════════════════════════════════════════
+// VOICE COMMANDS
+// ════════════════════════════════════════════════════════════
+
+;(function initVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+  if(!SR) return
+
+  const r = new SR()
+  r.continuous     = true
+  r.interimResults = false
+  r.lang           = "en-US"
+
+  const colors = {
+    "red"   : "#ff4b4b", "orange" : "#ff6b35",
+    "yellow": "#ffb830", "green"  : "#30e86e",
+    "blue"  : "#30b8ff", "purple" : "#c030ff",
+    "pink"  : "#ff2d8f", "white"  : "#ffffff",
+    "gold"  : "#ffd700", "cyan"   : "#00e5ff",
+  }
+
+  r.onresult = e => {
+    const cmd = e.results[e.results.length - 1][0].transcript.toLowerCase().trim()
+    console.log("[Voice]", cmd)
+
+    if(cmd.includes("rain") || (cmd.includes("heart") && cmd.includes("rain"))) {
+      document.getElementById("btn-hearts-rain").click()
+    } else if(cmd.includes("firework")) {
+      document.getElementById("btn-fireworks").click()
+    } else if(cmd.includes("confetti")) {
+      document.getElementById("btn-confetti").click()
+    } else if(cmd.includes("love note") || cmd.includes("message")) {
+      document.getElementById("btn-love-note").click()
+    } else if(cmd.includes("clear") || cmd.includes("erase")) {
+      document.getElementById("btn-clear").click()
+    } else if(cmd.includes("undo")) {
+      doUndo()
+    } else if(cmd.includes("redo")) {
+      doRedo()
+    } else if(cmd.includes("save") || cmd.includes("download")) {
+      document.getElementById("btn-png").click()
+    } else if(cmd.includes("replay") || cmd.includes("play back")) {
+      document.getElementById("btn-replay").click()
+    } else if(cmd.includes("recognize") || cmd.includes("read")) {
+      document.getElementById("btn-ocr").click()
+
+    // Brush styles via voice
+    } else if(cmd.includes("neon")) {
+      setVoiceStyle("neon")
+    } else if(cmd.includes("chalk")) {
+      setVoiceStyle("chalk")
+    } else if(cmd.includes("watercolor") || cmd.includes("water")) {
+      setVoiceStyle("watercolor")
+    } else if(cmd.includes("smooth")) {
+      setVoiceStyle("smooth")
+    } else if(cmd.includes("hearts style") || cmd.includes("heart style")) {
+      setVoiceStyle("hearts")
+    } else if(cmd.includes("stars style") || cmd.includes("star style")) {
+      setVoiceStyle("stars")
+
+    // Colors
+    } else {
+      for(const [word, hex] of Object.entries(colors)){
+        if(cmd.includes(word)){
+          window.APP.currentColor = hex
+          document.querySelectorAll(".swatch").forEach(b => b.classList.remove("active"))
+          toast("🎨 " + word.charAt(0).toUpperCase() + word.slice(1))
+          setStatus("Color: " + word, "info")
+          break
+        }
+      }
+
+      // Brush size
+      if(cmd.includes("bigger") || cmd.includes("thicker") || cmd.includes("larger")){
+        window.APP.brushSize = Math.min(32, window.APP.brushSize + 3)
+        sldBrush.value = window.APP.brushSize
+        lblSize.textContent = window.APP.brushSize + "px"
+        toast("Brush: " + window.APP.brushSize + "px")
+      } else if(cmd.includes("smaller") || cmd.includes("thinner")){
+        window.APP.brushSize = Math.max(1, window.APP.brushSize - 3)
+        sldBrush.value = window.APP.brushSize
+        lblSize.textContent = window.APP.brushSize + "px"
+        toast("Brush: " + window.APP.brushSize + "px")
+      }
+    }
+  }
+
+  function setVoiceStyle(style){
+    window.APP.brushStyle = style
+    document.querySelectorAll(".style-pill").forEach(b => {
+      b.classList.toggle("active", b.dataset.style === style)
+    })
+    toast("Style: " + style)
+  }
+
+  r.onerror = e => { if(e.error !== "no-speech" && e.error !== "aborted") console.warn("[Voice]", e.error) }
+  r.onend   = () => { try { r.start() } catch(e){} }
+  try { r.start() } catch(e){}
+})()
+
+// ════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ════════════════════════════════════════════════════════════
+
+document.addEventListener("keydown", e => {
+  if(document.activeElement.tagName === "INPUT") return
+  const ctrl = e.ctrlKey || e.metaKey
+
+  if(ctrl && e.key === "z"){ e.preventDefault(); doUndo() }
+  else if(ctrl && (e.key === "y" || (e.shiftKey && e.key === "z"))){ e.preventDefault(); doRedo() }
+  else if(ctrl && e.key === "s"){ e.preventDefault(); document.getElementById("btn-png").click() }
+  else if(e.key === "Escape"){
+    document.querySelectorAll(".modal-veil").forEach(m => m.style.display = "none")
+    panel.classList.toggle("collapsed")
+  }
+  else if(e.key === " "){ e.preventDefault(); document.getElementById("btn-love-note").click() }
+})
+
+// ════════════════════════════════════════════════════════════
+// EXPORT APP REFERENCE
+// ════════════════════════════════════════════════════════════
+
+window.APP.BG_THEMES = BG_THEMES

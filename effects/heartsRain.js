@@ -1,91 +1,35 @@
-export function heartsRain(canvas){
-
-const ctx = canvas.getContext("2d")
-
-const hearts = []
-
-const heartCount = 160
-const duration = 7000   // 7 seconds
-
-const startTime = Date.now()
-
-
-for(let i=0;i<heartCount;i++){
-
-hearts.push({
-
-x: Math.random()*canvas.width,
-y: -Math.random()*canvas.height,
-size: 8 + Math.random()*14,
-speed: 0.8 + Math.random()*1.6,
-drift: (Math.random()-0.5)*0.7,
-opacity: 0.25 + Math.random()*0.35
-
-})
-
-}
-
-
-
-function drawHeart(x,y,size,opacity){
-
-ctx.save()
-
-ctx.translate(x,y)
-
-ctx.globalAlpha = opacity
-
-ctx.fillStyle = "#ff2d8f"
-
-ctx.shadowBlur = 8
-ctx.shadowColor = "#ff6fa8"
-
-ctx.beginPath()
-
-ctx.moveTo(0,-size/2)
-
-ctx.bezierCurveTo(size/2,-size,size,-size/4,0,size)
-
-ctx.bezierCurveTo(-size,-size/4,-size/2,-size,0,-size/2)
-
-ctx.fill()
-
-ctx.restore()
-
-}
-
-
-
-function animate(){
-
-const elapsed = Date.now() - startTime
-
-hearts.forEach(h=>{
-
-h.y += h.speed
-h.x += h.drift
-
-// reset heart when it goes off screen
-if(h.y > canvas.height + 40){
-
-h.y = -20
-h.x = Math.random()*canvas.width
-
-}
-
-drawHeart(h.x,h.y,h.size,h.opacity)
-
-})
-
-
-if(elapsed < duration){
-
-requestAnimationFrame(animate)
-
-}
-
-}
-
-animate()
-
+// effects/heartsRain.js
+export function heartsRain(canvas, ctx){
+  const hearts=[]
+  const COLORS=["#ff2d8f","#ff7ac0","#ff4b4b","#c030ff","#ff9fc8"]
+  for(let i=0;i<140;i++) hearts.push({
+    x:Math.random()*window.innerWidth,
+    y:-Math.random()*window.innerHeight,
+    size:6+Math.random()*18,
+    speed:0.6+Math.random()*2,
+    drift:(Math.random()-.5)*0.9,
+    alpha:0.3+Math.random()*0.5,
+    color:COLORS[Math.floor(Math.random()*COLORS.length)],
+    rot:Math.random()*Math.PI*2,
+    rotSpeed:(Math.random()-.5)*0.05
+  })
+  const end=Date.now()+7000
+  function draw(){
+    if(Date.now()>end) return
+    hearts.forEach(h=>{
+      h.y+=h.speed; h.x+=h.drift; h.rot+=h.rotSpeed
+      if(h.y>window.innerHeight+40){h.y=-20;h.x=Math.random()*window.innerWidth}
+      ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.rot)
+      ctx.globalAlpha=h.alpha; ctx.fillStyle=h.color
+      ctx.shadowColor=h.color; ctx.shadowBlur=8
+      const s=h.size/2
+      ctx.beginPath()
+      ctx.moveTo(0,-s*0.5)
+      ctx.bezierCurveTo(s*0.8,-s*1.2,s*1.5,-s*0.1,0,s*1.2)
+      ctx.bezierCurveTo(-s*1.5,-s*0.1,-s*0.8,-s*1.2,0,-s*0.5)
+      ctx.fill(); ctx.restore()
+    })
+    requestAnimationFrame(draw)
+  }
+  draw()
 }
